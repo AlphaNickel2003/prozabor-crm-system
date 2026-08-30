@@ -1,0 +1,111 @@
+@model IEnumerable<CrmSystem.DTOs.AllDealsResponseDto>
+
+@{
+    Layout = "_Layout";
+}
+
+<!-- Header -->
+<header class="header">
+    <div class="logo-placeholder"></div>
+    <h1>CRM System ProZabor</h1>
+</header>
+
+<!-- Sidebar -->
+<aside class="sidebar">
+    <nav class="sidebar-nav">
+        <button class="sidebar-btn active" data-tab="deals">Все заявки</button>
+        <button class="sidebar-btn" data-tab="tasks">Задачи</button>
+    </nav>
+    <button class="add-btn" id="openModalBtn">+</button>
+</aside>
+
+<!-- Main content -->
+<main class="main-content">
+    <!-- Блок "Все заявки" -->
+    <section id="tab-deals" class="tab-content active">
+        <div class="card">
+            <h2>Все заявки</h2>
+            <table class="deals-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Клиент</th>
+                        <th>Телефон</th>
+                        <th>Адрес</th>
+                    </tr>
+                </thead>
+                <tbody id="dealsTableBody">
+                    @foreach (var deal in Model)
+                    {
+                        <tr data-id="@deal.Id">
+                            <td>@deal.Id</td>
+                            <td>@deal.CustomersName</td>
+                            <td>@deal.CustomersPhoneNumber</td>
+                            <td>@deal.Location</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- Блок "Задачи" (заглушка) -->
+    <section id="tab-tasks" class="tab-content">
+        <div class="card placeholder-card">
+            <h2>Задачи</h2>
+            <p>Раздел в разработке. Здесь будут отображаться ваши задачи.</p>
+            <div class="coming-soon-icon">🚧</div>
+        </div>
+    </section>
+</main>
+
+<!-- Модальное окно для создания заявки -->
+<div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+        <div class="modal-header">
+            <h2>Новая заявка</h2>
+            <button class="modal-close" id="closeModalBtn">&times;</button>
+        </div>
+        <form id="createDealForm">
+            <div class="form-group">
+                <label for="customersName">Имя клиента *</label>
+                <input type="text" id="customersName" name="customersName" required maxlength="50" />
+            </div>
+            <div class="form-group">
+                <label for="customersPhoneNumber">Телефон *</label>
+                <input type="text" id="customersPhoneNumber" name="customersPhoneNumber" required maxlength="50" />
+            </div>
+            <div class="form-group">
+                <label for="location">Адрес</label>
+                <input type="text" id="location" name="location" maxlength="200" />
+            </div>
+            <div class="form-group">
+                <label for="description">Описание</label>
+                <textarea id="description" name="description" maxlength="100" rows="3"></textarea>
+            </div>
+            <div class="form-group">
+                <label for="nextCall">Дата следующего звонка</label>
+                <input type="datetime-local" id="nextCall" name="nextCall" />
+            </div>
+            <button type="submit" class="btn-submit">Создать</button>
+        </form>
+    </div>
+</div>
+
+<!-- Модальное окно для просмотра деталей сделки -->
+<div class="modal-overlay" id="detailsModalOverlay">
+    <div class="modal modal-details">
+        <div class="modal-header">
+            <h2>Детали заявки #<span id="detailId"></span></h2>
+            <button class="modal-close" id="closeDetailsModalBtn">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="detail-row"><strong>Клиент:</strong> <span id="detailName"></span></div>
+            <div class="detail-row"><strong>Телефон:</strong> <span id="detailPhone"></span></div>
+            <div class="detail-row"><strong>Адрес:</strong> <span id="detailLocation"></span></div>
+            <div class="detail-row"><strong>Описание:</strong> <span id="detailDescription"></span></div>
+            <div class="detail-row"><strong>Дата создания:</strong> <span id="detailCreatedAt"></span></div>
+            <div class="detail-row"><strong>Следующий звонок:</strong> <span id="detailNextCall"></span></div>
+        </div>
+    </div>
+</div>

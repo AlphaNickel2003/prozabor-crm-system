@@ -1,0 +1,6 @@
+@CrmSystemProZabor_HostAddress = http://localhost:5118
+
+GET {{CrmSystemProZabor_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
