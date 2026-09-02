@@ -5,6 +5,7 @@ using CrmSystem.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using CrmSystem.Data;
+using System.Diagnostics;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,5 +27,12 @@ app.UseRequestLocalization();
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
+
+// Узнаём порт, на котором будет запущено приложение
+var port = 5118; // Порт из вашего файла launchSettings.json
+var url = $"http://localhost:{port}";
+
+// Открываем браузер ДО того, как приложение начнёт "слушать" запросы
+Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
 
 app.Run();
