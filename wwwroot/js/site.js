@@ -1,185 +1,409 @@
-// Форматирование даты в формате HH:mm dd.MM.yyyy
-function formatDate(dateString) {
-    if (!dateString) return '—';
-    const date = new Date(dateString);
-    // Проверка на валидность даты
-    if (isNaN(date.getTime())) return '—';
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
-    return `${hours}:${minutes} ${day}.${month}.${year}`;
-}
-
 document.addEventListener('DOMContentLoaded', function () {
-    // Переключение вкладок
-    const sidebarButtons = document.querySelectorAll('.sidebar-btn');
-    const tabContents = {
-        deals: document.getElementById('tab-deals'),
-        tasks: document.getElementById('tab-tasks')
-    };
 
-    sidebarButtons.forEach(btn => {
+    // ========== DOM-ссылки ==========
+    const sectionDeals = document.getElementById('section-deals');
+    const sectionTasks = document.getElementById('section-tasks');
+    const dealsTableBody = document.getElementById('dealsTableBody');
+    const dealsEmpty = document.getElementById('dealsEmpty');
+
+    const taskToday = document.getElementById('taskToday');
+    const taskTomorrow = document.getElementById('taskTomorrow');
+    const taskWeek = document.getElementById('taskWeek');
+    const tasksEmpty = document.getElementById('tasksEmpty');
+
+    // Модалки
+    const formModalOverlay = document.getElementById('formModalOverlay');
+    const detailsModalOverlay = document.getElementById('detailsModalOverlay');
+    const confirmModalOverlay = document.getElementById('confirmModalOverlay');
+    const closeFormModalBtn = document.getElementById('closeFormModalBtn');
+    const closeDetailsModalBtn = document.getElementById('closeDetailsModalBtn');
+    const closeConfirmModalBtn = document.getElementById('closeConfirmModalBtn');
+
+    // Форма
+    const dealForm = document.getElementById('dealForm');
+    const editId = document.getElementById('editId');
+    const formModalTitle = document.getElementById('formModalTitle');
+    const formSubmitBtn = document.getElementById('formSubmitBtn');
+
+    // Поля формы
+    const fCustomersName = document.getElementById('customersName');
+    const fCustomersPhoneNumber = document.getElementById('customersPhoneNumber');
+    const fLocation = document.getElementById('location');
+    const fDescription = document.getElementById('description');
+    const fDateTask = document.getElementById('dateTask');
+
+    // Кнопки сайдбара
+    const sidebarBtns = document.querySelectorAll('.sidebar-btn');
+    const addBtn = document.getElementById('openModalBtn');
+
+    // Детали
+    const detailId = document.getElementById('detailId');
+    const detailName = document.getElementById('detailName');
+    const detailPhone = document.getElementById('detailPhone');
+    const detailLocation = document.getElementById('detailLocation');
+    const detailDescription = document.getElementById('detailDescription');
+    const detailDateTask = document.getElementById('detailDateTask');
+    const editDealBtn = document.getElementById('editDealBtn');
+    const deleteDealBtn = document.getElementById('deleteDealBtn');
+
+    // Подтверждение удаления
+    const confirmDeleteYes = document.getElementById('confirmDeleteYes');
+    const confirmDeleteNo = document.getElementById('confirmDeleteNo');
+
+    // Переменные для хранения текущего удаляемого ID
+    let deleteTargetId = null;
+
+    // ========== Функции ==========
+
+    // Форматирование даты
+    function formatDate(dateString) {
+        if (!dateString) return '—';
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) return '—';
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        return `${hours}:${minutes} ${day}.${month}.${year}`;
+    }
+
+    // Форматирование для input datetime-local
+    function toInputDateTime(dateString) {
+        if (!dateString) return '';
+        const d = new Date(dateString);
+        return d.toISOString().slice(0, 16);
+    }
+
+    // Загрузка всех заявок (для таблицы) – без фильтрации
+    async function loadDeals() {
+        try {
+            const response = await fetch('/api/deals');
+            if (!response.ok) throw new Error('Ошибка загрузки заявок');
+            const deals = await response.json();
+            renderDealsTable(deals);
+        } catch (e) {
+            console.error(e);
+            alert('Не удалось загрузить заявки');
+        }
+    }
+
+    // Рендер таблицы
+    function renderDealsTable(deals) {
+        dealsTableBody.innerHTML = '';
+        if (!deals || deals.length === 0) {
+            dealsEmpty.style.display = 'block';
+            return;
+        }
+        dealsEmpty.style.display = 'none';
+        deals.forEach(deal => {
+            const tr = document.createElement('tr');
+            tr.dataset.id = deal.id;
+            tr.innerHTML = `
+                <td>${deal.id}</td>
+                <td>${deal.customersName || ''}</td>
+                <td>${deal.customersPhoneNumber || ''}</td>
+                <td>${deal.location || ''}</td>
+            `;
+            tr.addEventListener('click', () => openDetails(deal.id));
+            dealsTableBody.appendChild(tr);
+        });
+    }
+
+    // Загрузка задач (для трёх колонок)
+    async function loadTasks() {
+        try {
+            const response = await fetch('/api/deals');
+            if (!response.ok) throw new Error('Ошибка загрузки задач');
+            const deals = await response.json();
+            renderTasks(deals);
+        } catch (e) {
+            console.error(e);
+            alert('Не удалось загрузить задачи');
+        }
+    }
+
+    // Рендер задач по колонкам
+    function renderTasks(deals) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const dayAfterTomorrow = new Date(today);
+        dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 2);
+        const weekEnd = new Date(dayAfterTomorrow);
+        weekEnd.setDate(weekEnd.getDate() + 7); // +7 дней от послезавтра
+
+        // Фильтруем и сортируем по времени (ранние сверху)
+        const todayList = deals
+            .filter(d => d.dateTask && new Date(d.dateTask).toDateString() === today.toDateString())
+            .sort((a, b) => new Date(a.dateTask) - new Date(b.dateTask));
+
+        const tomorrowList = deals
+            .filter(d => d.dateTask && new Date(d.dateTask).toDateString() === tomorrow.toDateString())
+            .sort((a, b) => new Date(a.dateTask) - new Date(b.dateTask));
+
+        const weekList = deals
+            .filter(d => {
+                if (!d.dateTask) return false;
+                const dt = new Date(d.dateTask);
+                return dt >= dayAfterTomorrow && dt <= weekEnd;
+            })
+            .sort((a, b) => new Date(a.dateTask) - new Date(b.dateTask));
+
+        // Очищаем контейнеры
+        [taskToday, taskTomorrow, taskWeek].forEach(el => el.innerHTML = '');
+
+        if (todayList.length === 0 && tomorrowList.length === 0 && weekList.length === 0) {
+            tasksEmpty.style.display = 'block';
+            return;
+        }
+        tasksEmpty.style.display = 'none';
+
+        // Функция создания карточки
+        function createTaskCard(deal) {
+            const card = document.createElement('div');
+            card.className = 'task-card';
+            card.dataset.id = deal.id;
+            const time = deal.dateTask ? new Date(deal.dateTask).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '';
+            card.innerHTML = `
+                <div class="task-time">${time}</div>
+                <div class="task-name">${deal.customersName || ''}</div>
+                <div class="task-phone">${deal.customersPhoneNumber || ''}</div>
+                <div class="task-location">${deal.location || ''}</div>
+            `;
+            card.addEventListener('click', () => openDetails(deal.id));
+            return card;
+        }
+
+        todayList.forEach(d => taskToday.appendChild(createTaskCard(d)));
+        tomorrowList.forEach(d => taskTomorrow.appendChild(createTaskCard(d)));
+        weekList.forEach(d => taskWeek.appendChild(createTaskCard(d)));
+    }
+
+    // Обновить все данные (после создания, редактирования, удаления)
+    function refreshAll() {
+        loadDeals();
+        loadTasks();
+    }
+
+    // ========== Переключение разделов ==========
+    sidebarBtns.forEach(btn => {
         btn.addEventListener('click', function () {
-            // Убираем active у всех кнопок
-            sidebarButtons.forEach(b => b.classList.remove('active'));
+            sidebarBtns.forEach(b => b.classList.remove('active'));
             this.classList.add('active');
 
-            // Прячем все вкладки
-            Object.values(tabContents).forEach(tab => tab.classList.remove('active'));
-
-            // Показываем нужную
-            const tabId = this.dataset.tab;
-            if (tabContents[tabId]) {
-                tabContents[tabId].classList.add('active');
+            const tab = this.dataset.tab;
+            if (tab === 'deals') {
+                sectionDeals.classList.add('active');
+                sectionTasks.classList.remove('active');
+                loadDeals();
+            } else if (tab === 'tasks') {
+                sectionDeals.classList.remove('active');
+                sectionTasks.classList.add('active');
+                loadTasks();
             }
         });
     });
 
-    // Модальное окно
-    const modalOverlay = document.getElementById('modalOverlay');
-    const openModalBtn = document.getElementById('openModalBtn');
-    const closeModalBtn = document.getElementById('closeModalBtn');
-
-    function openModal() {
-        modalOverlay.classList.add('active');
+    // ========== Модалка создания ==========
+    function openCreateModal() {
+        editId.value = '0';
+        formModalTitle.textContent = 'Новая заявка';
+        formSubmitBtn.textContent = 'Создать';
+        dealForm.reset();
+        formModalOverlay.classList.add('active');
         document.body.style.overflow = 'hidden';
     }
 
-    function closeModal() {
-        modalOverlay.classList.remove('active');
+    function closeFormModal() {
+        formModalOverlay.classList.remove('active');
         document.body.style.overflow = '';
-        document.getElementById('createDealForm').reset();
     }
 
-    openModalBtn.addEventListener('click', openModal);
-    closeModalBtn.addEventListener('click', closeModal);
-    modalOverlay.addEventListener('click', function (e) {
-        if (e.target === modalOverlay) closeModal();
+    addBtn.addEventListener('click', openCreateModal);
+    closeFormModalBtn.addEventListener('click', closeFormModal);
+    formModalOverlay.addEventListener('click', function (e) {
+    // Закрываем только если кликнули именно по фону и нет выделенного текста
+        if (e.target === this && !window.getSelection().toString()) {
+            closeFormModal();
+        }
     });
 
-    // Отправка формы
-    const form = document.getElementById('createDealForm');
-    form.addEventListener('submit', async function (e) {
+    // ========== Отправка формы (создание/редактирование) ==========
+    dealForm.addEventListener('submit', async function (e) {
         e.preventDefault();
 
-        const formData = new FormData(form);
-        const data = {
-            customersName: formData.get('customersName'),
-            customersPhoneNumber: formData.get('customersPhoneNumber'),
-            location: formData.get('location'),
-            description: formData.get('description') || null,
-            nextCall: formData.get('nextCall') || null
+        const id = parseInt(editId.value) || 0;
+        const payload = {
+            customersName: fCustomersName.value.trim(),
+            customersPhoneNumber: fCustomersPhoneNumber.value.trim(),
+            location: fLocation.value.trim(),
+            description: fDescription.value.trim(),
+            dateTask: fDateTask.value
         };
 
+        if (!payload.customersName || !payload.customersPhoneNumber || !payload.dateTask) {
+            alert('Поля "Имя клиента", "Телефон" и "Дата задачи" обязательны');
+            return;
+        }
+
+        const method = id === 0 ? 'POST' : 'PUT';
+        const url = id === 0 ? '/api/deals' : `/api/deals/${id}`;
+
         try {
-            const response = await fetch('/Home/CreateDeal', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify(data)
+            const response = await fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
             });
 
             if (!response.ok) {
                 const errorText = await response.text();
-                throw new Error(errorText || 'Ошибка при создании заявки');
+                throw new Error(errorText || 'Ошибка сохранения');
             }
 
-            const newDeal = await response.json();
-
-            // Добавляем новую строку в таблицу
-            const tbody = document.getElementById('dealsTableBody');
-            const row = document.createElement('tr');
-            row.dataset.id = newDeal.id;
-            row.innerHTML = `
-                <td>${newDeal.id}</td>
-                <td>${newDeal.customersName}</td>
-                <td>${newDeal.customersPhoneNumber}</td>
-                <td>${newDeal.location}</td>
-            `;
-            tbody.prepend(row);
-
-            closeModal();
-            // Небольшое уведомление (можно улучшить)
-            alert('Заявка успешно создана!');
+            closeFormModal();
+            refreshAll();
         } catch (error) {
-            console.error('Ошибка:', error);
-            alert('Не удалось создать заявку: ' + error.message);
+            console.error(error);
+            alert('Не удалось сохранить заявку: ' + error.message);
         }
     });
-    
-});
 
-// Обработчик клика на строке таблицы (делегирование)
-document.getElementById('dealsTableBody').addEventListener('click', async function (e) {
-    // Находим ближайший <tr> – строку таблицы
-    const row = e.target.closest('tr');
-    if (!row) return;
+    // ========== Открытие деталей ==========
+    let currentDetailId = null;
 
-    // Получаем id из data-атрибута
-    const id = row.dataset.id;
-    if (!id) return;
-
-    try {
-        // Отправляем GET-запрос на сервер для получения деталей сделки
-        const response = await fetch(`/Home/GetDeal/${id}`, {   // путь зависит от вашего маршрута
-            method: 'GET',
-            headers: {
-                'Accept': 'application/json'
+    async function openDetails(id) {
+        currentDetailId = id;
+        try {
+            const response = await fetch(`/api/deals/${id}`);
+            if (!response.ok) {
+                if (response.status === 404) {
+                    alert('Заявка не найдена. Возможно, она была удалена.');
+                    refreshAll();
+                    return;
+                }
+                throw new Error('Ошибка загрузки');
             }
-        });
+            const deal = await response.json();
 
-        // Если статус 404 – сделка не найдена (возможно, удалена)
-        if (response.status === 404) {
-            // Удаляем строку из таблицы
-            row.remove();
-            alert('Эта заявка была удалена другим пользователем. Строка удалена из списка.');
-            return;
+            detailId.textContent = deal.id;
+            detailName.textContent = deal.customersName || '';
+            detailPhone.textContent = deal.customersPhoneNumber || '';
+            detailLocation.textContent = deal.location || '—';
+            detailDescription.textContent = deal.description || '—';
+            detailDateTask.textContent = formatDate(deal.dateTask);
+
+            detailsModalOverlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        } catch (e) {
+            console.error(e);
+            alert('Не удалось загрузить детали');
         }
-
-        // Если другой статус ошибки
-        if (!response.ok) {
-            throw new Error(`Ошибка загрузки: ${response.status}`);
-        }
-
-        // Получаем данные сделки в формате JSON
-        const deal = await response.json();
-
-        // Открываем модальное окно с деталями
-        showDealDetails(deal);
-    } catch (error) {
-        console.error('Ошибка при получении сделки:', error);
-        alert('Не удалось загрузить данные заявки. Попробуйте позже.');
     }
-});
 
-// Функция показа деталей
-function showDealDetails(deal) {
-    document.getElementById('detailId').textContent = deal.id;
-    document.getElementById('detailName').textContent = deal.customersName;
-    document.getElementById('detailPhone').textContent = deal.customersPhoneNumber;
-    document.getElementById('detailLocation').textContent = deal.location || '—';
-    document.getElementById('detailDescription').textContent = deal.description || '—';
-    document.getElementById('detailCreatedAt').textContent = formatDate(deal.createdAt);
-    document.getElementById('detailNextCall').textContent = deal.nextCall ? formatDate(deal.nextCall) : '—';
-
-    document.getElementById('detailsModalOverlay').classList.add('active');
-    document.body.style.overflow = 'hidden';
-}
-
-// Закрытие модального окна деталей
-document.getElementById('closeDetailsModalBtn').addEventListener('click', function () {
-    document.getElementById('detailsModalOverlay').classList.remove('active');
-    document.body.style.overflow = '';
-});
-
-// Закрытие по клику на overlay
-document.getElementById('detailsModalOverlay').addEventListener('click', function (e) {
-    if (e.target === this) {
-        this.classList.remove('active');
+    closeDetailsModalBtn.addEventListener('click', function () {
+        detailsModalOverlay.classList.remove('active');
         document.body.style.overflow = '';
-    }
+    });
+    detailsModalOverlay.addEventListener('click', function (e) {
+        if (e.target === this) {
+            this.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+    });
+
+    // ========== Редактирование ==========
+    editDealBtn.addEventListener('click', function () {
+        if (!currentDetailId) return;
+        // Закрыть детали, открыть форму с данными
+        detailsModalOverlay.classList.remove('active');
+        document.body.style.overflow = '';
+
+        fetch(`/api/deals/${currentDetailId}`)
+            .then(res => res.json())
+            .then(deal => {
+                editId.value = deal.id;
+                formModalTitle.textContent = 'Редактирование заявки';
+                formSubmitBtn.textContent = 'Сохранить';
+                fCustomersName.value = deal.customersName || '';
+                fCustomersPhoneNumber.value = deal.customersPhoneNumber || '';
+                fLocation.value = deal.location || '';
+                fDescription.value = deal.description || '';
+                fDateTask.value = toInputDateTime(deal.dateTask);
+                formModalOverlay.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            })
+            .catch(e => {
+                console.error(e);
+                alert('Не удалось загрузить данные для редактирования');
+            });
+    });
+
+    // ========== Удаление (без закрытия модалки деталей) ==========
+    deleteDealBtn.addEventListener('click', function () {
+        if (!currentDetailId) return;
+        deleteTargetId = currentDetailId;
+        // НЕ закрываем detailsModalOverlay, показываем подтверждение поверх
+        confirmModalOverlay.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    });
+
+    // Подтверждение удаления
+    confirmDeleteYes.addEventListener('click', async function () {
+        if (!deleteTargetId) return;
+        try {
+            const response = await fetch(`/api/deals/${deleteTargetId}`, { method: 'DELETE' });
+            if (!response.ok) {
+                const err = await response.text();
+                throw new Error(err);
+            }
+            // Закрываем оба модальных окна
+            confirmModalOverlay.classList.remove('active');
+            detailsModalOverlay.classList.remove('active');
+            document.body.style.overflow = '';
+            deleteTargetId = null;
+            refreshAll();
+        } catch (e) {
+            console.error(e);
+            alert('Не удалось удалить заявку: ' + e.message);
+            // При ошибке закрываем только подтверждение, детали остаются
+            confirmModalOverlay.classList.remove('active');
+            document.body.style.overflow = '';
+            // но детали остаются открытыми
+        }
+    });
+
+    confirmDeleteNo.addEventListener('click', function () {
+        confirmModalOverlay.classList.remove('active');
+        document.body.style.overflow = '';
+        deleteTargetId = null;
+        // Детали остаются открытыми
+    });
+
+    closeConfirmModalBtn.addEventListener('click', function () {
+        confirmModalOverlay.classList.remove('active');
+        document.body.style.overflow = '';
+        deleteTargetId = null;
+        // Детали остаются открытыми
+    });
+
+    confirmModalOverlay.addEventListener('click', function (e) {
+        if (e.target === this) {
+            this.classList.remove('active');
+            document.body.style.overflow = '';
+            deleteTargetId = null;
+            // Детали остаются открытыми
+        }
+    });
+
+    // ========== Инициализация ==========
+    // По умолчанию активна вкладка "Все заявки"
+    document.querySelector('.sidebar-btn[data-tab="deals"]').classList.add('active');
+    sectionDeals.classList.add('active');
+    loadDeals();
+    // Подгружаем задачи в фоне
+    loadTasks();
+
 });

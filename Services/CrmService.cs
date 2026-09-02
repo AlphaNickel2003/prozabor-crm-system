@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using System.Xml.Schema;
 
 namespace CrmSystem.Services;
 
@@ -27,8 +28,7 @@ public class CrmService : ICrmService
             CustomersPhoneNumber = dto.CustomersPhoneNumber,
             Location = dto.Location,
             Description = dto.Description,
-            CreatedAt = DateTime.UtcNow,
-            NextCall = dto.NextCall
+            DateTask = dto.DateTask
         };
 
         await _context.AddAsync(newDeal, ct);
@@ -40,10 +40,9 @@ public class CrmService : ICrmService
     public async Task<IEnumerable<DealRecord>> GetAllDealsAsync(CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
-
         var deals = _context.Deals;
 
-        return deals;
+        return await deals.ToListAsync(ct);
     }
 
     public async Task<DealRecord?> GetDealByIdAsync(int Id, CancellationToken ct)
@@ -51,5 +50,33 @@ public class CrmService : ICrmService
         ct.ThrowIfCancellationRequested();
 
         return await _context.Deals.FindAsync(Id, ct);
+    }
+
+    public async Task <DealRecord?> UpdateDealAsync (int id, CreateNewDealRecordDto dto, CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+
+        var existing = await _context.Deals.FirstOrDefaultAsync(d => d.Id == id, ct);
+        if (existing == null) return null;
+        
+        existing.CustomersName = dto.CustomersName;
+        existing.CustomersPhoneNumber = dto.CustomersPhoneNumber;
+        existing.Location = dto.Location;
+        existing.Description = dto.Description;
+        existing.DateTask = dto.DateTask;
+
+        await _context.SaveChangesAsync(ct);
+        return existing;
+    }
+
+    public async Task<bool> DeleteDealAsync(int id, CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        var deal = await _context.Deals.FirstOrDefaultAsync(ct);
+        if (deal == null) return false;
+
+        _context.Deals.Remove(deal);
+        await _context.SaveChangesAsync(ct);
+        return true;
     }
 }

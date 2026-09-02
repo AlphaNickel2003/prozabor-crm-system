@@ -5,7 +5,6 @@ public class DealRecord{
     public string CustomersName {get; set;} = string.Empty;
     public string CustomersPhoneNumber {get; set;} = string.Empty;
     public string Location {get; set;} = string.Empty;
-    public string? Description {get; set;} = string.Empty;
-    public DateTime CreatedAt {get; set;}
-    public DateTime? NextCall {get; set;}
+    public string Description {get; set;} = string.Empty;
+    public DateTime DateTask {get; set;}
 }

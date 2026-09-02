@@ -8,9 +8,25 @@
 </head>
 <body>
     <div class="app-container">
+        <!-- Хедер -->
+        <header class="header">
+            <div class="logo-placeholder"></div>
+            <h1>CRM System ProZabor</h1>
+        </header>
+
+        <!-- Сайдбар -->
+        <aside class="sidebar">
+            <nav class="sidebar-nav">
+                <button class="sidebar-btn active" data-tab="deals">Все заявки</button>
+                <button class="sidebar-btn" data-tab="tasks">Задачи</button>
+            </nav>
+            <button class="add-btn" id="openModalBtn">+</button>
+        </aside>
+
+        <!-- Основное содержимое страницы (вставляется из Index.cshtml) -->
         @RenderBody()
     </div>
 
-    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/js/site.js" asp-append-version="true" defer></script>
 </body>
 </html>

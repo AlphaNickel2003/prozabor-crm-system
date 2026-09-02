@@ -23,9 +23,6 @@ namespace CrmSystemProZabor.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
-
                     b.Property<string>("CustomersName")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -36,6 +33,9 @@ namespace CrmSystemProZabor.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("TEXT");
 
+                    b.Property<DateTime>("DateTask")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -44,9 +44,6 @@ namespace CrmSystemProZabor.Migrations
                     b.Property<string>("Location")
                         .IsRequired()
                         .HasMaxLength(200)
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime?>("NextCall")
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");

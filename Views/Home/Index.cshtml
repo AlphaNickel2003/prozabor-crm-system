@@ -4,27 +4,11 @@
     Layout = "_Layout";
 }
 
-<!-- Header -->
-<header class="header">
-    <div class="logo-placeholder"></div>
-    <h1>CRM System ProZabor</h1>
-</header>
-
-<!-- Sidebar -->
-<aside class="sidebar">
-    <nav class="sidebar-nav">
-        <button class="sidebar-btn active" data-tab="deals">Все заявки</button>
-        <button class="sidebar-btn" data-tab="tasks">Задачи</button>
-    </nav>
-    <button class="add-btn" id="openModalBtn">+</button>
-</aside>
-
-<!-- Main content -->
 <main class="main-content">
-    <!-- Блок "Все заявки" -->
-    <section id="tab-deals" class="tab-content active">
+    <!-- Раздел "Все задачи" -->
+    <section id="section-deals" class="section active">
         <div class="card">
-            <h2>Все заявки</h2>
+            <h2>Все задачи</h2>
             <table class="deals-table">
                 <thead>
                     <tr>
@@ -35,64 +19,68 @@
                     </tr>
                 </thead>
                 <tbody id="dealsTableBody">
-                    @foreach (var deal in Model)
-                    {
-                        <tr data-id="@deal.Id">
-                            <td>@deal.Id</td>
-                            <td>@deal.CustomersName</td>
-                            <td>@deal.CustomersPhoneNumber</td>
-                            <td>@deal.Location</td>
-                        </tr>
-                    }
+                    <!-- Строки добавляются JavaScript -->
                 </tbody>
             </table>
+            <div id="dealsEmpty" style="display:none; text-align:center; padding:20px; color:#8ab87a;">Нет задач</div>
         </div>
     </section>
 
-    <!-- Блок "Задачи" (заглушка) -->
-    <section id="tab-tasks" class="tab-content">
-        <div class="card placeholder-card">
-            <h2>Задачи</h2>
-            <p>Раздел в разработке. Здесь будут отображаться ваши задачи.</p>
-            <div class="coming-soon-icon">🚧</div>
+    <!-- Раздел "Задачи" -->
+    <section id="section-tasks" class="section">
+        <div class="tasks-container">
+            <div class="task-column">
+                <h3>Сегодня</h3>
+                <div id="taskToday"></div>
+            </div>
+            <div class="task-column">
+                <h3>Завтра</h3>
+                <div id="taskTomorrow"></div>
+            </div>
+            <div class="task-column">
+                <h3>Неделя</h3>
+                <div id="taskWeek"></div>
+            </div>
         </div>
+        <div id="tasksEmpty" style="display:none; text-align:center; padding:20px; color:#8ab87a;">Нет задач</div>
     </section>
 </main>
 
-<!-- Модальное окно для создания заявки -->
-<div class="modal-overlay" id="modalOverlay">
-    <div class="modal">
+<!-- Модалка создания / редактирования -->
+<div class="modal-overlay" id="formModalOverlay">
+    <div class="modal modal-form">
         <div class="modal-header">
-            <h2>Новая заявка</h2>
-            <button class="modal-close" id="closeModalBtn">&times;</button>
+            <h2 id="formModalTitle">Новая заявка</h2>
+            <button class="modal-close" id="closeFormModalBtn">&times;</button>
         </div>
-        <form id="createDealForm">
+        <form id="dealForm">
+            <input type="hidden" id="editId" value="0" />
             <div class="form-group">
                 <label for="customersName">Имя клиента *</label>
-                <input type="text" id="customersName" name="customersName" required maxlength="50" />
+                <input type="text" id="customersName" required maxlength="50" />
             </div>
             <div class="form-group">
                 <label for="customersPhoneNumber">Телефон *</label>
-                <input type="text" id="customersPhoneNumber" name="customersPhoneNumber" required maxlength="50" />
+                <input type="text" id="customersPhoneNumber" required maxlength="50" />
             </div>
             <div class="form-group">
                 <label for="location">Адрес</label>
-                <input type="text" id="location" name="location" maxlength="200" />
+                <input type="text" id="location" maxlength="200" />
             </div>
             <div class="form-group">
                 <label for="description">Описание</label>
-                <textarea id="description" name="description" maxlength="100" rows="3"></textarea>
+                <textarea id="description" maxlength="100" rows="3"></textarea>
             </div>
             <div class="form-group">
-                <label for="nextCall">Дата следующего звонка</label>
-                <input type="datetime-local" id="nextCall" name="nextCall" />
+                <label for="dateTask">Дата и время задачи *</label>
+                <input type="datetime-local" id="dateTask" required />
             </div>
-            <button type="submit" class="btn-submit">Создать</button>
+            <button type="submit" class="btn-submit" id="formSubmitBtn">Создать</button>
         </form>
     </div>
 </div>
 
-<!-- Модальное окно для просмотра деталей сделки -->
+<!-- Модалка деталей -->
 <div class="modal-overlay" id="detailsModalOverlay">
     <div class="modal modal-details">
         <div class="modal-header">
@@ -104,8 +92,28 @@
             <div class="detail-row"><strong>Телефон:</strong> <span id="detailPhone"></span></div>
             <div class="detail-row"><strong>Адрес:</strong> <span id="detailLocation"></span></div>
             <div class="detail-row"><strong>Описание:</strong> <span id="detailDescription"></span></div>
-            <div class="detail-row"><strong>Дата создания:</strong> <span id="detailCreatedAt"></span></div>
-            <div class="detail-row"><strong>Следующий звонок:</strong> <span id="detailNextCall"></span></div>
+            <div class="detail-row"><strong>Дата задачи:</strong> <span id="detailDateTask"></span></div>
+        </div>
+        <div class="modal-footer" style="margin-top: 20px; display: flex; gap: 12px; justify-content: flex-end;">
+            <button class="btn-edit" id="editDealBtn">Изменить</button>
+            <button class="btn-delete" id="deleteDealBtn">Удалить</button>
+        </div>
+    </div>
+</div>
+
+<!-- Модалка подтверждения удаления -->
+<div class="modal-overlay" id="confirmModalOverlay">
+    <div class="modal modal-confirm">
+        <div class="modal-header">
+            <h2>Подтверждение удаления</h2>
+            <button class="modal-close" id="closeConfirmModalBtn">&times;</button>
+        </div>
+        <div class="modal-body" style="text-align:center; padding:20px 0;">
+            <p style="font-size:18px; color: #d4e8d4;">Вы точно хотите удалить задачу?</p>
+        </div>
+        <div class="modal-footer" style="display: flex; gap: 12px; justify-content: center;">
+            <button class="btn-confirm-yes" id="confirmDeleteYes">Да</button>
+            <button class="btn-confirm-no" id="confirmDeleteNo">Нет</button>
         </div>
     </div>
 </div>

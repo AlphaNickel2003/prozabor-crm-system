@@ -21,8 +21,7 @@ namespace CrmSystemProZabor.Migrations
                     CustomersPhoneNumber = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
                     Location = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
                     Description = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    NextCall = table.Column<DateTime>(type: "TEXT", nullable: true)
+                    DateTask = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {

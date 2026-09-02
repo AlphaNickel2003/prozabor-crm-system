@@ -4,8 +4,8 @@ public record CreateNewDealRecordDto(
     string CustomersName,
     string CustomersPhoneNumber,
     string Location,
-    string? Description,
-    DateTime? NextCall
+    string Description,
+    DateTime DateTask
 );
 
 public record DealRecordResponseDto(
@@ -13,14 +13,14 @@ public record DealRecordResponseDto(
     string CustomersName,
     string CustomersPhoneNumber,
     string Location,
-    string? Description,
-    DateTime CreatedAt,
-    DateTime? NextCall
+    string Description,
+    DateTime DateTask
 );
 
 public record AllDealsResponseDto(
     int Id,
     string CustomersName,
     string CustomersPhoneNumber,
-    string Location
+    string Location,
+    DateTime DateTask
 );
