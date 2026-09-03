@@ -18,6 +18,12 @@ builder.Services.AddScoped<ICrmService, CrmSystem.Services.CrmService>();
 
 var app = builder.Build();
 
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    db.Database.Migrate();
+}
+
 app.UseStaticFiles();
 
 app.UseRouting();
@@ -28,11 +34,7 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
-// Узнаём порт, на котором будет запущено приложение
-var port = 5118; // Порт из вашего файла launchSettings.json
-var url = $"http://localhost:{port}";
-
 // Открываем браузер ДО того, как приложение начнёт "слушать" запросы
-Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+Process.Start(new ProcessStartInfo($"http://localhost:{5000}") { UseShellExecute = true });
 
 app.Run();
