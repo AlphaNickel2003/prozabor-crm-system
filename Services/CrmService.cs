@@ -72,7 +72,7 @@ public class CrmService : ICrmService
     public async Task<bool> DeleteDealAsync(int id, CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
-        var deal = await _context.Deals.FirstOrDefaultAsync(ct);
+        var deal = await _context.Deals.FirstOrDefaultAsync(d => d.Id == id, ct);
         if (deal == null) return false;
 
         _context.Deals.Remove(deal);

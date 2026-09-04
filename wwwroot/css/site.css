@@ -220,23 +220,24 @@ body {
     background: rgba(140, 184, 122, 0.08);
 }
 
-/* Задачи – три колонки (без скролла у колонок) */
-.tasks-container {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
+/* Flex-контейнер для колонок */
+.tasks-flex {
+    display: flex;
     gap: 20px;
-    align-items: start;
+    align-items: flex-start;   /* все колонки прижаты к верху */
 }
 
+/* Каждая колонка */
 .task-column {
+    flex: 1;                   /* все три колонки равной ширины */
     background: rgba(255, 255, 255, 0.04);
     backdrop-filter: blur(8px);
     border-radius: 20px;
     border: 1px solid rgba(255, 255, 255, 0.06);
     padding: 16px;
-    /* убрали max-height и overflow-y */
 }
 
+/* Заголовки внутри колонок */
 .task-column h3 {
     text-align: center;
     color: #a8c99b;
@@ -245,6 +246,20 @@ body {
     border-bottom: 1px solid rgba(255, 255, 255, 0.06);
     padding-bottom: 12px;
     margin-bottom: 16px;
+}
+
+/* Блок «Просрочено» – внутри первой колонки */
+#taskOverdue {
+    background: rgba(180, 70, 50, 0.15);
+    border-radius: 20px;
+    border: 1px solid rgba(180, 70, 50, 0.3);
+    padding: 16px;
+    margin-bottom: 16px;   /* отступ от блока «Сегодня» */
+}
+
+#taskOverdue h3 {
+    color: #e0a090;
+    border-bottom-color: rgba(180, 70, 50, 0.2);
 }
 
 /* Карточка задачи */

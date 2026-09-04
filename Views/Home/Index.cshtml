@@ -28,22 +28,31 @@
 
     <!-- Раздел "Задачи" -->
     <section id="section-tasks" class="section">
-        <div class="tasks-container">
-            <div class="task-column">
-                <h3>Сегодня</h3>
-                <div id="taskToday"></div>
+        <!-- Flex-контейнер для трёх колонок -->
+        <div class="tasks-flex">
+            <!-- Первая колонка: просрочено + сегодня -->
+            <div class="task-column" id="taskColumnToday">
+                <div id="taskOverdue" style="display: none;"></div>   <!-- сюда добавится блок просроченных -->
+                <div id="taskToday"></div>                           <!-- сюда добавится сегодня -->
             </div>
-            <div class="task-column">
-                <h3>Завтра</h3>
+
+            <!-- Вторая колонка: завтра -->
+            <div class="task-column" id="taskColumnTomorrow">
                 <div id="taskTomorrow"></div>
             </div>
-            <div class="task-column">
-                <h3>Неделя</h3>
+
+            <!-- Третья колонка: неделя -->
+            <div class="task-column" id="taskColumnWeek">
                 <div id="taskWeek"></div>
             </div>
         </div>
-        <div id="tasksEmpty" style="display:none; text-align:center; padding:20px; color:#8ab87a;">Нет задач</div>
+
+        <!-- Сообщение "Нет задач" -->
+        <div id="tasksEmpty" style="display: none; text-align: center; padding: 40px; color: #7a9a7a;">
+            Нет задач
+        </div>
     </section>
+</div>
 </main>
 
 <!-- Модалка создания / редактирования -->

@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const taskTomorrow = document.getElementById('taskTomorrow');
     const taskWeek = document.getElementById('taskWeek');
     const tasksEmpty = document.getElementById('tasksEmpty');
+    const taskOverdue = document.getElementById('taskOverdue');
 
     // Модалки
     const formModalOverlay = document.getElementById('formModalOverlay');
@@ -125,24 +126,39 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Рендер задач по колонкам
     function renderTasks(deals) {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
+        // ---- текущий момент и вычисление дат ----
+        const now = new Date();                          // текущее время
+        const today = new Date(now);
+        today.setHours(0, 0, 0, 0);                     // сегодня 00:00:00
+
         const tomorrow = new Date(today);
         tomorrow.setDate(tomorrow.getDate() + 1);
         const dayAfterTomorrow = new Date(today);
         dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 2);
         const weekEnd = new Date(dayAfterTomorrow);
-        weekEnd.setDate(weekEnd.getDate() + 7); // +7 дней от послезавтра
+        weekEnd.setDate(weekEnd.getDate() + 7);
 
-        // Фильтруем и сортируем по времени (ранние сверху)
-        const todayList = deals
-            .filter(d => d.dateTask && new Date(d.dateTask).toDateString() === today.toDateString())
+        // ---- фильтры ----
+        // Просроченные: дата+время < текущий момент (включая сегодняшние, если время прошло)
+        const overdueList = deals
+            .filter(d => d.dateTask && new Date(d.dateTask) < now)
             .sort((a, b) => new Date(a.dateTask) - new Date(b.dateTask));
 
+        // Сегодня: дата сегодня И время >= текущего (т.е. ещё не наступило)
+        const todayList = deals
+            .filter(d => {
+                if (!d.dateTask) return false;
+                const dt = new Date(d.dateTask);
+                return dt >= now && dt.toDateString() === today.toDateString();
+            })
+            .sort((a, b) => new Date(a.dateTask) - new Date(b.dateTask));
+
+        // Завтра: дата завтра (любое время)
         const tomorrowList = deals
             .filter(d => d.dateTask && new Date(d.dateTask).toDateString() === tomorrow.toDateString())
             .sort((a, b) => new Date(a.dateTask) - new Date(b.dateTask));
 
+        // Неделя: с afterTomorrow по weekEnd включительно
         const weekList = deals
             .filter(d => {
                 if (!d.dateTask) return false;
@@ -151,16 +167,7 @@ document.addEventListener('DOMContentLoaded', function () {
             })
             .sort((a, b) => new Date(a.dateTask) - new Date(b.dateTask));
 
-        // Очищаем контейнеры
-        [taskToday, taskTomorrow, taskWeek].forEach(el => el.innerHTML = '');
-
-        if (todayList.length === 0 && tomorrowList.length === 0 && weekList.length === 0) {
-            tasksEmpty.style.display = 'block';
-            return;
-        }
-        tasksEmpty.style.display = 'none';
-
-        // Функция создания карточки
+        // Вспомогательная функция создания карточки
         function createTaskCard(deal) {
             const card = document.createElement('div');
             card.className = 'task-card';
@@ -176,9 +183,39 @@ document.addEventListener('DOMContentLoaded', function () {
             return card;
         }
 
+        // Очищаем контейнеры и вставляем заголовки
+        function resetContainer(container, title) {
+            container.innerHTML = `<h3>${title}</h3>`;
+        }
+        resetContainer(taskToday, 'Сегодня');
+        resetContainer(taskTomorrow, 'Завтра');
+        resetContainer(taskWeek, 'Неделя');
+
+        // Блок просроченных: полностью очищаем и заполняем, если есть записи
+        taskOverdue.innerHTML = '';
+        if (overdueList.length > 0) {
+            taskOverdue.style.display = 'block';
+            // Заголовок
+            const title = document.createElement('h3');
+            title.textContent = 'Просрочено';
+            taskOverdue.appendChild(title);
+            // Карточки
+            overdueList.forEach(d => taskOverdue.appendChild(createTaskCard(d)));
+        } else {
+            taskOverdue.style.display = 'none';
+        }
+
+        // Заполняем три основные колонки
         todayList.forEach(d => taskToday.appendChild(createTaskCard(d)));
         tomorrowList.forEach(d => taskTomorrow.appendChild(createTaskCard(d)));
         weekList.forEach(d => taskWeek.appendChild(createTaskCard(d)));
+
+        // Сообщение "Нет задач", если все четыре списка пусты
+        if (overdueList.length === 0 && todayList.length === 0 && tomorrowList.length === 0 && weekList.length === 0) {
+            tasksEmpty.style.display = 'block';
+        } else {
+            tasksEmpty.style.display = 'none';
+        }
     }
 
     // Обновить все данные (после создания, редактирования, удаления)
