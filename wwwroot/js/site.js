@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', function () {
 
-    // ========== DOM-ссылки ==========
+    // DOM-ссылки
     const sectionDeals = document.getElementById('section-deals');
     const sectionTasks = document.getElementById('section-tasks');
     const dealsTableBody = document.getElementById('dealsTableBody');
@@ -54,7 +54,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // Переменные для хранения текущего удаляемого ID
     let deleteTargetId = null;
 
-    // ========== Функции ==========
+    //Функции
 
     // Форматирование даты
     function formatDate(dateString) {
@@ -76,7 +76,7 @@ document.addEventListener('DOMContentLoaded', function () {
         return d.toISOString().slice(0, 16);
     }
 
-    // Загрузка всех заявок (для таблицы) – без фильтрации
+    // Загрузка всех заявок (для таблицы)
     async function loadDeals() {
         try {
             const response = await fetch('/api/deals');
@@ -126,10 +126,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Рендер задач по колонкам
     function renderTasks(deals) {
-        // ---- текущий момент и вычисление дат ----
-        const now = new Date();                          // текущее время
+        // текущий момент и вычисление дат
+        const now = new Date();
         const today = new Date(now);
-        today.setHours(0, 0, 0, 0);                     // сегодня 00:00:00
+        today.setHours(0, 0, 0, 0);
 
         const tomorrow = new Date(today);
         tomorrow.setDate(tomorrow.getDate() + 1);
@@ -138,7 +138,6 @@ document.addEventListener('DOMContentLoaded', function () {
         const weekEnd = new Date(dayAfterTomorrow);
         weekEnd.setDate(weekEnd.getDate() + 7);
 
-        // ---- фильтры ----
         // Просроченные: дата+время < текущий момент (включая сегодняшние, если время прошло)
         const overdueList = deals
             .filter(d => d.dateTask && new Date(d.dateTask) < now)
@@ -153,7 +152,7 @@ document.addEventListener('DOMContentLoaded', function () {
             })
             .sort((a, b) => new Date(a.dateTask) - new Date(b.dateTask));
 
-        // Завтра: дата завтра (любое время)
+        // Завтра: дата завтра
         const tomorrowList = deals
             .filter(d => d.dateTask && new Date(d.dateTask).toDateString() === tomorrow.toDateString())
             .sort((a, b) => new Date(a.dateTask) - new Date(b.dateTask));
@@ -224,7 +223,7 @@ document.addEventListener('DOMContentLoaded', function () {
         loadTasks();
     }
 
-    // ========== Переключение разделов ==========
+    // Переключение разделов
     sidebarBtns.forEach(btn => {
         btn.addEventListener('click', function () {
             sidebarBtns.forEach(b => b.classList.remove('active'));
@@ -243,7 +242,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    // ========== Модалка создания ==========
+    // Модалка создания
     function openCreateModal() {
         editId.value = '0';
         formModalTitle.textContent = 'Новая заявка';
@@ -267,7 +266,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    // ========== Отправка формы (создание/редактирование) ==========
+    // Отправка формы (создание/редактирование)
     dealForm.addEventListener('submit', async function (e) {
         e.preventDefault();
 
@@ -308,7 +307,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    // ========== Открытие деталей ==========
+    // Открытие деталей
     let currentDetailId = null;
 
     async function openDetails(id) {
@@ -351,7 +350,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    // ========== Редактирование ==========
+    // Редактирование
     editDealBtn.addEventListener('click', function () {
         if (!currentDetailId) return;
         // Закрыть детали, открыть форму с данными
@@ -378,7 +377,7 @@ document.addEventListener('DOMContentLoaded', function () {
             });
     });
 
-    // ========== Удаление (без закрытия модалки деталей) ==========
+    // Удаление (без закрытия модалки деталей)
     deleteDealBtn.addEventListener('click', function () {
         if (!currentDetailId) return;
         deleteTargetId = currentDetailId;
@@ -435,7 +434,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    // ========== Инициализация ==========
+    // Инициализация
     // По умолчанию активна вкладка "Все заявки"
     document.querySelector('.sidebar-btn[data-tab="deals"]').classList.add('active');
     sectionDeals.classList.add('active');

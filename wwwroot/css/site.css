@@ -224,12 +224,12 @@ body {
 .tasks-flex {
     display: flex;
     gap: 20px;
-    align-items: flex-start;   /* все колонки прижаты к верху */
+    align-items: flex-start;
 }
 
 /* Каждая колонка */
 .task-column {
-    flex: 1;                   /* все три колонки равной ширины */
+    flex: 1;
     background: rgba(255, 255, 255, 0.04);
     backdrop-filter: blur(8px);
     border-radius: 20px;
@@ -254,7 +254,7 @@ body {
     border-radius: 20px;
     border: 1px solid rgba(180, 70, 50, 0.3);
     padding: 16px;
-    margin-bottom: 16px;   /* отступ от блока «Сегодня» */
+    margin-bottom: 16px;
 }
 
 #taskOverdue h3 {
