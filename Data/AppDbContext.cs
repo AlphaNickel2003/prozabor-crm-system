@@ -32,7 +32,7 @@ public class AppDbContext : DbContext
                 .HasMaxLength(200);
 
             entity.Property(e => e.Description)
-                .HasMaxLength(100);
+                .HasMaxLength(300);
         
             }
         );
